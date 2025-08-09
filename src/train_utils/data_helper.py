@@ -78,9 +78,9 @@ def build_vocab(x_train, x_val, x_test, x_train_target, x_train2):
 def data_helper_bert(x_all, plm_model, task='main'):
     
     if plm_model == 'bertweet':
-        tokenizer = AutoTokenizer.from_pretrained("vinai/bertweet-base", normalization=True, local_files_only=True)
+        tokenizer = AutoTokenizer.from_pretrained("vinai/bertweet-base", normalization=True, local_files_only=False)
     elif plm_model == 'bert':
-        tokenizer = BertTokenizer.from_pretrained("bert-base-uncased", do_lower_case=True, local_files_only=True)
+        tokenizer = BertTokenizer.from_pretrained("bert-base-uncased", do_lower_case=True, local_files_only=False)
     
     print("Length of the set: %d"%(len(x_all[0])))
     x_input_ids, x_seg_ids, x_atten_masks, x_len = convert_data_to_ids(tokenizer, x_all, task)

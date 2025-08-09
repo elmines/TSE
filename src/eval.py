@@ -15,7 +15,6 @@ import test_utils.data_helper as dh
 from test_utils import modeling, metrics, model_utils
 
 warnings.filterwarnings('ignore')
-os.environ["CUDA_VISIBLE_DEVICES"]="1"
 
 
 def evaluation():

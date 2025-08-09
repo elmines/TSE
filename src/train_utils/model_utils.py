@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from transformers import AdamW
+from torch.optim import AdamW
 from train_utils import modeling
 
 

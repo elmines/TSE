@@ -1,7 +1,6 @@
-import torch, gensim, numpy as np
+import torch
 from torch.utils.data import TensorDataset, DataLoader
 from transformers import BertTokenizer, BertweetTokenizer
-from torchtext import data
 
 STRING = '<pad>'
 sequence_length = 50
@@ -64,50 +63,3 @@ def data_loader(x_all, batch_size, data_type):
         data_loader = DataLoader(tensor_loader, shuffle=False, batch_size=batch_size)
 
     return x_input_ids, x_seg_ids, x_atten_masks, x_len, y, data_loader
-
-def data_loader_BiLSTM(x_all, batch_size, data_type):
-    
-    x        = torch.tensor(x_all[0], dtype=torch.long).cuda()
-    x_target = torch.tensor(x_all[1], dtype=torch.long).cuda()
-
-    tensor_loader = TensorDataset(x, x_target)
-
-    if data_type == 'train':
-        data_loader = DataLoader(tensor_loader, shuffle=True, batch_size=batch_size)
-    else:
-        data_loader = DataLoader(tensor_loader, shuffle=False, batch_size=batch_size)
-
-    return x, x_target, data_loader
-
-def data_helper_BiLSTM(x_all, word_index):
-    
-    x, x_target = x_all[0], x_all[1]
-    print("Length of original x: {}".format(len(x)))
-    
-    x       = [xi[:sequence_length] for xi in x]                                      # truncate to seq len
-    x_pad   = [xi[:sequence_length] + [STRING]*(sequence_length-len(xi)) for xi in x] # padding
-    x_index = [[word_index[word] for word in sentence] for sentence in x_pad]       # convert word to index
-
-    return x_index, x_target
-
-def build_vocab(x_train, x_val, x_test, labels):
-    
-    model1     = gensim.models.KeyedVectors.load_word2vec_format('../crawl-300d-2M.bin', limit = 500000,binary=True)
-    text_field = data.Field(lower=True)
-
-    text_field.build_vocab(x_train, x_val, x_test, labels, [STRING])
-    
-    word_vectors = dict()
-    word_index   = dict()
-    ind = 0
-    for word in text_field.vocab.itos:
-        if word in model1.key_to_index:
-            word_vectors[word] = model1[word]
-        elif word == STRING:
-            word_vectors[word] = np.zeros(300, dtype=np.float32)
-        else:
-            word_vectors[word] = np.random.uniform(-0.25, 0.25, 300)
-        word_index[word] = ind
-        ind = ind+1
-    
-    return word_vectors, word_index

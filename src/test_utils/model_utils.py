@@ -1,5 +1,5 @@
 import torch
-from transformers import AdamW
+from torch.optim import AdamW
 from test_utils import modeling
 
 
