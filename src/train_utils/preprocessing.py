@@ -3,7 +3,7 @@ import re
 import wordninja
 import csv
 import pandas as pd
-
+from tqdm import tqdm
 
 # Data loading
 def load_data(filename):
@@ -64,7 +64,7 @@ def clean_all(filename, norm_dict):
     clean_data = [None for _ in range(len(raw_data))]
     
     print("data size in main task: ", len(raw_data))
-    for i in range(len(raw_data)):
+    for i in tqdm(range(len(raw_data)), total=len(raw_data), desc=f'Cleaning main data for {filename}'):
         clean_data[i] = data_clean(raw_data[i], norm_dict, 'main')
         x_target[i] = data_clean(x_target[i], norm_dict, 'main')
     
@@ -74,7 +74,7 @@ def clean_all(filename, norm_dict):
     clean_data_aux = [None for _ in range(len(raw_data_aux))]
     
     print("data size in auxiliary task: ", len(raw_data_aux))
-    for i in range(len(raw_data_aux)):
+    for i in tqdm(range(len(raw_data_aux)), total=len(raw_data_aux), desc=f'Cleaning aux data for {filename}'):
         clean_data_aux[i] = data_clean(raw_data_aux[i], norm_dict, 'aux')
     
     return clean_data, label, x_target, clean_data_aux, label_aux

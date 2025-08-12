@@ -43,7 +43,7 @@ def data_clean(text, args, norm_dict):
     p.set_options(p.OPT.URL,p.OPT.EMOJI,p.OPT.RESERVED)
     
     clean_data = p.clean(text)  # using lib to clean URL, emoji...
-    clean_data = re.sub(r"#SemST", "", clean_data)
+    clean_data = re.sub(r"#SemST", "", clean_data, flags=re.IGNORECASE)
     clean_data = re.findall(r"[A-Za-z#@]+|[,.!?&/\<>=$]|[0-9]+",clean_data)
     clean_data = [[x.lower()] for x in clean_data]
     

@@ -2,6 +2,7 @@
 __pycache__
 venv/
 *.pt
+.vscode/
 
 input.txt
 *.log

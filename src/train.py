@@ -62,7 +62,7 @@ def train():
     if model_select.startswith('bert'):
         x_train_all, x_val_all, x_test_all, x_train_aux_all, _ = dh.load_dataset(file, model_select, config)
     else:
-        x_train_all, x_val_all, x_test_all, x_train_aux_all, _, word_vectors = dh.load_dataset(file, model_select, config)
+        raise ValueError("Only BERT supported now")
     split_point = len(x_train_all[0])
     
     if mul_task:
@@ -73,9 +73,7 @@ def train():
         _, _, _, y_val, _, valloader = dh.data_loader(x_val_all, batch_size, 'val', model_select)   
         _, _, _, y_test, _, testloader = dh.data_loader(x_test_all, batch_size, 'test', model_select)   
     else:
-        _, y_train, _, _, trainloader = dh.data_loader(x_train_all, batch_size, 'train', model_select, mul_task, split_point)
-        _, y_val, _, _, valloader = dh.data_loader(x_val_all, batch_size, 'val', model_select) 
-        _, y_test, _, _, testloader = dh.data_loader(x_test_all, batch_size, 'test', model_select) 
+        raise ValueError("Only BERT supported now")
     y_val = y_val.to(device)
     y_test = y_test.to(device)
 
@@ -94,9 +92,6 @@ def train():
         
         # model setup
         model, optimizer = model_utils.model_setup(config, model_select, device)
-        if model_select not in ['bert','bertweet']:
-            et = torch.tensor(list(word_vectors.values()), dtype=torch.float32).cuda()
-            model.embedding.weight = nn.Parameter(et, requires_grad = False)
         loss_function = nn.CrossEntropyLoss()
         kwargs = {
                     "model": model,
