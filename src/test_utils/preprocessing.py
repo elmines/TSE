@@ -3,16 +3,17 @@ import re
 import wordninja
 import csv
 import pandas as pd
+from tqdm import tqdm
 
 
 # Data loading
 def load_data(filename):
 
     concat_text = pd.DataFrame()
-    raw_text = pd.read_csv(filename,usecols=[0], encoding='ISO-8859-1')
-    raw_target = pd.read_csv(filename,usecols=[1], encoding='ISO-8859-1')
-    raw_label = pd.read_csv(filename,usecols=[2], encoding='ISO-8859-1')
-    mapped_tar = pd.read_csv(filename,usecols=[3], encoding='ISO-8859-1')
+    raw_text = pd.read_csv(filename,usecols=['Tweet'], encoding='ISO-8859-1')
+    raw_target = pd.read_csv(filename,usecols=['Target'], encoding='ISO-8859-1').rename(columns={'Target': 'GT Target'})
+    raw_label = pd.read_csv(filename,usecols=['Stance'], encoding='ISO-8859-1').rename(columns={'Stance': 'GT Stance'})
+    mapped_tar = pd.read_csv(filename,usecols=['Mapped Target'], encoding='ISO-8859-1')
     label = pd.DataFrame.replace(raw_label,['Dummy Stance','FAVOR','NONE','AGAINST'], [3,2,1,0])
     concat_text = pd.concat([raw_text, label, raw_target, mapped_tar], axis=1)
     
@@ -49,7 +50,7 @@ def clean_all(filename, norm_dict):
     x_mapped_tar = concat_text['Mapped Target'].values.tolist()
     clean_data = [None for _ in range(len(raw_data))]
     
-    for i in range(len(raw_data)):
+    for i in tqdm(range(len(raw_data)), total=len(raw_data), desc=f'Cleaning {filename}'):
         clean_data[i] = data_clean(raw_data[i], norm_dict)
         x_target[i] = data_clean(x_target[i], norm_dict)
         x_mapped_tar[i] = data_clean(x_mapped_tar[i], norm_dict)
