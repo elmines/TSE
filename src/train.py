@@ -144,12 +144,12 @@ def train():
                 temp_list.append(f1_average)
             best_test_macro.append(sum(temp_list)/len(temp_list))
                 
-        print("Best micro test results: " + ",".join(map(str, best_test_micro)))
-        print("Best micro test results on SemEval-2016: " + ",".join(map(str, [temp_list[0]])))
-        print("Best micro test results on COVID-19: " + ",".join(map(str, [temp_list[1]])))
-        print("Best micro test results on argmin: " + ",".join(map(str, [temp_list[2]])))
-        print("Best micro test results on PStance: " + ",".join(map(str, [temp_list[3]])))
-        print("Best macro test results: " + ",".join(map(str, best_test_macro)))
+        print("Best macro          test results on SemEval-2016: " + ",".join(map(str, [temp_list[0]])))
+        print("Best macro          test results on COVID-19: " + ",".join(map(str, [temp_list[1]])))
+        print("Best macro          test results on argmin: " + ",".join(map(str, [temp_list[2]])))
+        print("Best macro          test results on PStance: " + ",".join(map(str, [temp_list[3]])))
+        print("Best macro-of-macro test results: " + ",".join(map(str, best_test_macro)))
+        print("Best micro          test results: " + ",".join(map(str, best_test_micro)))
     
 if __name__ == "__main__":
     train()
