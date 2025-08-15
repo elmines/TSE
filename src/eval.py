@@ -76,7 +76,7 @@ def evaluation():
             model = modeling.bert_classifier(config, model_select).to(device)
         else:
             raise ValueError("Only bert models supported")
-        model.load_state_dict(torch.load(weight))
+        model.load_state_dict(torch.load(weight), strict=False)
 
         # evaluation
         model.eval()
