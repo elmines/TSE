@@ -24,8 +24,9 @@ for in_path in sys.argv[1:]:
         reader = csv.DictReader(r)
         for row in reader:
             pred_strs.append(row['Mapped Target'])
-            label_strs.append(row['Target'])
-            targets.add(row['Target'])
+            gt_target = row['Target'] if 'Target' in row else row['GT Target']
+            label_strs.append(gt_target)
+            targets.add(gt_target)
     target2id = {t:i for i,t in enumerate(targets)}
 
     preds = [target2id[t] for t in pred_strs]
