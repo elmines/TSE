@@ -2,7 +2,7 @@ import pandas as pd, numpy as np
 from sklearn.metrics import precision_recall_fscore_support
 
 def calculateF1(model, seed):
-    file = '../output/Stance_Merge_Unrelated/predictions_{}_seed_{}.csv'.format(model, seed)
+    file = 'output/Stance_Merge_Unrelated/predictions_{}_seed_{}.csv'.format(model, seed)
     gt_target = pd.read_csv(file, usecols=[1], encoding='ISO-8859-1')
     mapped_target = pd.read_csv(file, usecols=[2], encoding='ISO-8859-1')
 
@@ -36,8 +36,6 @@ def calculateF1(model, seed):
     print('F1 for {} = {}'.format('Covid19', f1_target_avg2))
 
 for seed in [0, 112, 342]:
-    calculateF1('BiLSTM', seed)
-    calculateF1('Bert', seed)
     calculateF1('Bertweet', seed)
 
 # after getting the results for three seeds, just average them to get the results for Table 3

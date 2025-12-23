@@ -1,2 +1,10 @@
 .DS_Store
 __pycache__
+venv/
+*.pt
+.vscode/
+
+input.txt
+*.log
+*.csv
+data/Stance_Merge_Unrelated

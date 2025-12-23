@@ -1,19 +1,20 @@
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
-import torch.optim as optim
-import preprocessor as p
 import random
-import csv
 import os
-import ast
 import argparse
 import numpy as np
-import pandas as pd
 import warnings
-import train_utils.preprocessing as pp
-import train_utils.data_helper as dh
-from train_utils import modeling, metrics, model_utils
+
+import test_utils.data_helper as test_dh
+import train_utils.data_helper as train_dh
+
+
+from test_utils import modeling
+from train_utils import metrics, model_utils
+
+# import train_utils.preprocessing as pp
+# import train_utils.data_helper as dh
+# from train_utils import modeling, metrics, model_utils
 
 warnings.filterwarnings('ignore')
 
@@ -25,11 +26,7 @@ def train():
     parser.add_argument('-s', '--seed', help='Random seed', required=False)
     parser.add_argument('-m', '--model_select', help='Model name', required=False)
     parser.add_argument('-mod_dir', '--model_dir', help='Saved model dir', required=False)
-    parser.add_argument('-train', '--train_data', help='Name of the train data file', default=None, required=False)
-    parser.add_argument('-dev', '--dev_data', help='Name of the dev data file', default=None, required=False)
     parser.add_argument('-test', '--test_data', help='Name of the test data file', default=None, required=False)
-    parser.add_argument('-a', '--aux_eval', help='Auxiliary task', action='store_true')
-    parser.add_argument('-mul', '--mul_task', help='Multi-task with target prediction as aux task', action='store_true')
     args = vars(parser.parse_args())
 
     # gpu or cpu
@@ -49,33 +46,24 @@ def train():
     random_seeds.append(int(args['seed']))
     outdir = args['model_dir']
     model_select = args['model_select']
-    mul_task = args['mul_task']
     batch_size = int(config['batch_size'])
     print("Model: ",model_select)
     print("Batch size: ",config['batch_size'])
-    print("Multi-task learning: ",args['mul_task'])
     print(60*"#")
-    
-    # load train/val/test sets
-    file = [args['train_data'], args['dev_data'], args['test_data']]
-    print(outdir, file[0], file[1], file[2])
+
+    # load test set
+    file = [args['test_data']] * 3
     if model_select.startswith('bert'):
-        x_train_all, x_val_all, x_test_all, x_train_aux_all, _ = dh.load_dataset(file, model_select, config)
+        x_train_all, x_val_all, x_test_all, x_train_aux_all, _ = train_dh.load_dataset(file, model_select, config)
+    else:
+        raise ValueError("Only support bert")
+
+    if model_select.startswith('bert'):
+        _, _, _, y_test, _, testloader = train_dh.data_loader(x_test_all, batch_size, 'test', model_select)   
     else:
         raise ValueError("Only BERT supported now")
-    split_point = len(x_train_all[0])
-    
-    if mul_task:
-        x_train_all = [a + b for a, b in zip(x_train_all,x_train_aux_all)]
-        
-    if model_select.startswith('bert'):
-        _, _, _, y_train, _, trainloader = dh.data_loader(x_train_all, batch_size, 'train', model_select, mul_task, split_point)
-        _, _, _, y_val, _, valloader = dh.data_loader(x_val_all, batch_size, 'val', model_select)   
-        _, _, _, y_test, _, testloader = dh.data_loader(x_test_all, batch_size, 'test', model_select)   
-    else:
-        raise ValueError("Only BERT supported now")
-    y_val = y_val.to(device)
     y_test = y_test.to(device)
+
 
     # test
     for seed in random_seeds:    
@@ -89,45 +77,18 @@ def train():
         torch.cuda.manual_seed_all(seed)
         torch.backends.cudnn.benchmark = False
         torch.backends.cudnn.deterministic = True
-        
         # model setup
-        model, optimizer = model_utils.model_setup(config, model_select, device)
-        loss_function = nn.CrossEntropyLoss()
-        kwargs = {
-                    "model": model,
-                    "optimizer": optimizer,
-                    "model_select": model_select,
-        }
-        updater = model_utils.model_updater(**kwargs)
-        
-        best_val = 0
-        best_test_micro, best_test_macro = [], []
-        for epoch in range(0, int(config['total_epochs'])):
-            print('Epoch:', epoch)
+        weight = os.path.join(outdir,model_select+'_seed{}.pt'.format(seed))
+        if model_select in ['bert','bertweet']:
+            model = modeling.bert_classifier(config, model_select).to(device)
+        else:
+            raise ValueError("Only bert models supported")
+        model.load_state_dict(torch.load(weight), strict=False)
 
-            # train
-            updater.model.train()
-            sum_loss = updater.update(trainloader, loss_function, device)
-            print(sum_loss/len(y_train))
-
-            # evaluation on validation set
-            updater.model.eval()
-            with torch.no_grad():
-                preds = model_utils.model_preds(valloader, updater.model, device, model_select)
-                f1_average = metrics.train_compute_f1(preds, y_val)
-                
-            if f1_average > best_val:
-                best_val = f1_average
-                model_weight = os.path.join(outdir,model_select+'_seed{}.pt'.format(seed))
-                torch.save(updater.model.state_dict(), model_weight)
-
-        print("Best val results of model {} and seed {} are: {}".format(model_select, seed, best_val))
-        
-        # evaluation on test set 
-        weight = os.path.join(outdir, model_select+'_seed{}.pt'.format(seed))
-        model.load_state_dict(torch.load(weight))
-
+        # evaluation
         model.eval()
+        
+        best_test_micro, best_test_macro = [], []
         with torch.no_grad():
             preds = model_utils.model_preds(testloader, model, device, model_select)
 
@@ -136,8 +97,8 @@ def train():
             best_test_micro.append(f1_average)
 
             # macro-averaged F1
-            preds_list = dh.sep_test_set(preds) 
-            y_test_list = dh.sep_test_set(y_test)
+            preds_list = train_dh.sep_test_set(preds) 
+            y_test_list = train_dh.sep_test_set(y_test)
             temp_list = []
             for ind in range(len(y_test_list)):
                 f1_average = metrics.train_compute_f1(preds_list[ind], y_test_list[ind])

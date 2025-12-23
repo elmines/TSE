@@ -3,10 +3,9 @@
 ###################################################################################################################
 config=../config/config-bertweet.txt
 model_dir=./trained_models/downloaded
-
 for seed in {1..3}
 do
-    test_data=../data/BERTweet_target_classification.csv
+    test_data=../data/gtpreds_test_all_onecol.csv
     echo "Start evaluation on seed ${seed}......"
     python eval.py -s ${seed} -c ${config} -test ${test_data} -mod_dir ${model_dir} -m bertweet
 done
@@ -17,10 +16,9 @@ exit 0
 config=../config/config-bertweet.txt
 model_dir=./trained_models/bertweet_multitask
 
-predictions_dir=../target-classification/output/targets_bertweet_bad_regex
 for seed in 0 112 343
 do
-    test_data=${predictions_dir}/predictions_Bertweet_seed_${seed}.csv
+    test_data=../data/gtpreds_test_all_onecol.csv
     echo "Start evaluation on seed ${seed}......"
     python eval.py -s ${seed} -c ${config} -test ${test_data} -mod_dir ${model_dir} -m bertweet
 done

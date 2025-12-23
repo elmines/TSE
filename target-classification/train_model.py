@@ -1,5 +1,5 @@
 import torch, torch.nn as nn, torch.optim as optim, random, numpy as np, argparse, json, utils.preprocessing as pp, utils.data_helper as dh, os, logging, pandas as pd, pdb
-from transformers import AdamW
+from torch.optim import AdamW
 from utils import modeling, model_eval, utils
 from tqdm import tqdm
 from pathlib import Path
@@ -95,15 +95,7 @@ def run_classifier():
         
         word_vectors = []
         if args.model_select == 'BiLSTM':
-            word_vectors, word_index = dh.build_vocab(x_train, x_val, x_test, labels[args.dataset])
-            x_train_all = dh.data_helper_BiLSTM(x_train_all, word_index)
-            x_val_all   = dh.data_helper_BiLSTM(x_val_all, word_index)
-            x_test_all  = dh.data_helper_BiLSTM(x_test_all, word_index)
-            _, y_train, trainloader = dh.data_loader_BiLSTM(x_train_all, batch_size, 'train')
-            _, y_val,   valloader   = dh.data_loader_BiLSTM(x_val_all, batch_size, 'val')
-            _, y_test,  testloader  = dh.data_loader_BiLSTM(x_test_all, batch_size, 'test')
-            model = modeling.BiLSTM_Classifier(num_labels, word_vectors).cuda()
-
+            raise ValueError("BiLSTM not supported on this branch")
         else:
             x_train_all, x_val_all, x_test_all = dh.data_helper_bert(x_train_all, x_val_all, x_test_all, model_select)
             x_train_input_ids, x_train_seg_ids, x_train_atten_masks, x_train_len, y_train, trainloader = dh.data_loader(x_train_all, batch_size, 'train')
@@ -112,8 +104,7 @@ def run_classifier():
             model = modeling.stance_classifier(num_labels,model_select).cuda()
 
         if model_select == 'BiLSTM':
-            optimizer = AdamW(model.parameters(), lr=lr)
-
+            raise ValueError("BiLSTM not supported on this branch")
         else: # Bert, Bertweet models
             for n,p in model.named_parameters():
                 if "bert.embeddings" in n:

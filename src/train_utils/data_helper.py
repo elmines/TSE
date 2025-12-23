@@ -3,10 +3,8 @@ import transformers
 import json
 import random
 import numpy as np
-import gensim.models.keyedvectors as word2vec
 from torch.utils.data import TensorDataset, DataLoader, ConcatDataset, Sampler
 from transformers import BertTokenizer, AutoTokenizer, BertweetTokenizer, BartTokenizer,RobertaTokenizer
-from torchtext.legacy import data
 from train_utils import preprocessing as pp
 transformers.logging.set_verbosity_error()
 
@@ -53,34 +51,14 @@ def convert_data_to_ids(tokenizer, text, task):
     return input_ids, seg_ids, attention_masks, sent_len
 
 
-def build_vocab(x_train, x_val, x_test, x_train_target, x_train2):    
-    
-    # Build vocabulary for baselines
-    model1 = word2vec.KeyedVectors.load_word2vec_format('./crawl-300d-2M.bin', limit = 500000, binary=True)
-    text_field = data.Field(lower=True)
-    text_field.build_vocab(x_train, x_val, x_test, x_train_target, ['<pad>'], x_train2)
-    word_vectors, word_index = dict(), dict()
-    ind = 0
-    for word in text_field.vocab.itos:
-        if word in model1.vocab:
-            word_vectors[word] = model1[word]
-        elif word == '<pad>':
-            word_vectors[word] = np.zeros(300, dtype=np.float32)
-        else:
-            word_vectors[word] = np.random.uniform(-0.25, 0.25, 300)
-        word_index[word] = ind
-        ind = ind + 1
-    
-    return word_vectors, word_index
-
 
 # Prepare data for BERT/BERTweet
 def data_helper_bert(x_all, plm_model, task='main'):
     
     if plm_model == 'bertweet':
-        tokenizer = AutoTokenizer.from_pretrained("vinai/bertweet-base", normalization=True, local_files_only=True)
+        tokenizer = AutoTokenizer.from_pretrained("vinai/bertweet-base", normalization=True, local_files_only=False)
     elif plm_model == 'bert':
-        tokenizer = BertTokenizer.from_pretrained("bert-base-uncased", do_lower_case=True, local_files_only=True)
+        tokenizer = BertTokenizer.from_pretrained("bert-base-uncased", do_lower_case=True, local_files_only=False)
     
     print("Length of the set: %d"%(len(x_all[0])))
     x_input_ids, x_seg_ids, x_atten_masks, x_len = convert_data_to_ids(tokenizer, x_all, task)
@@ -227,10 +205,4 @@ def load_dataset(filename, plm_model, config):
         return x_train_all, x_val_all, x_test_all, x_train_aux_all, y_test_aux
     
     else:
-        word_vectors, word_index = build_vocab(x_train, x_val, x_test, x_train_target, x_train_aux)
-        x_train_all = data_helper(config, x_train_all, word_index, 'main')
-        x_val_all = data_helper(config, x_val_all, word_index, 'main')
-        x_test_all = data_helper(config, x_test_all, word_index, 'main')
-        x_train_aux_all = data_helper(config, x_train_aux_all, word_index, 'aux')
-        
-        return x_train_all, x_val_all, x_test_all, x_train_aux_all, y_test_aux, word_vectors
+        raise ValueError("Only BERT models supported")

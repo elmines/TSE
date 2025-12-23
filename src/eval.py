@@ -15,7 +15,6 @@ import test_utils.data_helper as dh
 from test_utils import modeling, metrics, model_utils
 
 warnings.filterwarnings('ignore')
-os.environ["CUDA_VISIBLE_DEVICES"]="1"
 
 
 def evaluation():
@@ -54,8 +53,7 @@ def evaluation():
         x_test_all, gt_tar, map_tar = dh.load_dataset(args['test_data'], model_select, config)
         _, _, _, y_test, _, testloader = dh.data_loader(x_test_all, batch_size, 'test', model_select)
     else:
-        x_test_all, word_vectors, gt_tar, map_tar = dh.load_dataset(args['test_data'], model_select, config)
-        _, y_test, _, _, testloader = dh.data_loader(x_test_all, batch_size, 'test', model_select)     
+        raise ValueError("Only support bert")
     y_test = y_test.to(device) 
 
     # test
@@ -77,11 +75,8 @@ def evaluation():
         if model_select in ['bert','bertweet']:
             model = modeling.bert_classifier(config, model_select).to(device)
         else:
-            model = modeling.lstm_classifier(config, model_select).to(device)
-        model.load_state_dict(torch.load(weight))
-        if model_select not in ['bert','bertweet']:
-            et = torch.tensor(list(word_vectors.values()), dtype=torch.float32).cuda()
-            model.embedding.weight = nn.Parameter(et, requires_grad = False)
+            raise ValueError("Only bert models supported")
+        model.load_state_dict(torch.load(weight), strict=False)
 
         # evaluation
         model.eval()
